@@ -1,6 +1,8 @@
 import cv2 as cv
 import numpy as np
 import os
+import h5py
+
 from collections import deque
 from PIL import Image
 
@@ -91,7 +93,9 @@ def save_video_frames(video_filepath, shot_frames_filepath,
 
     cap.release()
     save_filepath = os.path.join(SAVE_VIDEO_SEG_LOC, save_filename)
-    np.save(save_filepath, np.array(data))
+
+    with h5py.File(save_filepath, 'w') as f:
+        dset = f.create_dataset(save_filename, data=np.array(data))
 
 def configure_crop_bounds(center_x, center_y):
     """ Return the bounds of the new frame that will be cropped
