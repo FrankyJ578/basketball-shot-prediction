@@ -151,6 +151,8 @@ def modify_frame(frame, left_x, right_x, top_y, bot_y):
 
     new_frame = np.dot(frame[...,:3], [.2989, .5870, .1140])
     new_frame = new_frame[top_y:bot_y, left_x:right_x]
+    # Resize image to be much smaller
+    new_frame = cv.resize(new_frame, dsize=(64, 96))
     return new_frame
 
 def process_all_videos():
