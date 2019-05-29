@@ -14,32 +14,32 @@ import h5py
 
 #Class to load dataset 
 class Shots(data.Dataset):
-	# Each item in the dataset contains
-	# frames: size (96,64, 8)
-	# y: labels of shots
+    # Each item in the dataset contains
+    # frames: size (96,64, 8)
+    # y: labels of shots
 
-	#assumes datapath is an h5py file
-	#label_data_path should be a npy file
-	def __init__(self, img_data_path, label_data_path):
-		super(Shots, self).__init__()
-		file = h5py.File(img_data_path, 'r')
-		images = list(file.keys())[0]
-		self.frames = np.asarray(file[images])
-		self.y = np.load(label_data_path)
+    #assumes datapath is an h5py file
+    #label_data_path should be a npy file
+    def __init__(self, img_data_path, label_data_path):
+        super(Shots, self).__init__()
+        file = h5py.File(img_data_path, 'r')
+        images = list(file.keys())[0]
+        self.frames = np.asarray(file[images])
+        self.y = np.load(label_data_path)
 
-	def __getitem__(self, idx):
-		example = (self.frames[idx], self.y[idx])
-		return example
+    def __getitem__(self, idx):
+        example = (self.frames[idx], self.y[idx])
+        return example
 
-	def __len__(self):
-		return len(self.y)
+    def __len__(self):
+        return len(self.y)
 
 
 def collate_fn(examples):
-	def merge_0d(scalars, dtype=torch.int64):
+    def merge_0d(scalars, dtype=torch.int64):
         return torch.tensor(np.repeat(scalars,4), dtype=dtype)
     def merge_3d(frames, dtype=torch.float64):
-    	return torch.stack(frames)
+        return torch.stack(frames)
     frames, labels = zip(*examples)
     ys = merge_0d(labels)
     shot_frames = merge_3d(frames)
