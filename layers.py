@@ -23,4 +23,4 @@ class Baseline(nn.Module):
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, 	)
+        

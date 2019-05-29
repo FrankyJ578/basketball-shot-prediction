@@ -42,7 +42,7 @@ def main(args):
 	model.train()
 	optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.8,.999), eps=1e-07, weight_decay=.001)
 	log.info("Building Dataset")
-	train_dataset = Shots("frames/sample.txt", "labels/sample.txt")
+	train_dataset = Shots("saved_video_inputs/sample.h5py", "labels/sample.txt")
 	train_loader = data.Dataloader(train_dataset, batch_size = 20, shuffle=True, num_workers=8, collate_fn=collate_fn)
 
 	# TODO: Do the same thing for dev. For now, use train dataset as dev
