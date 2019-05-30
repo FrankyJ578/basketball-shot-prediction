@@ -24,7 +24,6 @@ from util import collate_fn, Shots
 
 
 def main(args):
-
     args.save_dir = util.get_save_dir(args.save_dir, args.name, training=True)
     log = util.get_logger(args.save_dir, args.name)
     device, args.gpu_ids = util.get_available_devices()
@@ -90,7 +89,6 @@ def main(args):
                     #logging to tensorboard
                     tbx.add_scalar('dev_accuracy', results, step)
                     tbx.add_scalar("dev_loss", loss, steps)
-
 
 def evaluate(model, loader, device):
     num_correct = 0
