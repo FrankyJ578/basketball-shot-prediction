@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torchvision import models
 
 
 class Baseline(nn.Module):
@@ -20,7 +20,8 @@ class Baseline(nn.Module):
         return out
 
 
-class CNN(nn.Module):
+class VGGLSTM(nn.Module):
     def __init__(self):
-        super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64,   )
+        super(VGGLSTM, self).__init__()
+        original = models.vgg16(pretrained = True)
+        ## deleted old code, gonna work on this after lab

@@ -29,6 +29,11 @@ def main(args):
     log = util.get_logger(args.save_dir, args.name)
     device, args.gpu_ids = util.get_available_devices()
     tbx = SummaryWriter(args.save_dir)
+
+    #this lets use save model
+    saver = util.CheckpointSaver(args.save_dir, max_checkpoints = 15, metric_name='accuracy', maximize_metric = True, log=log)
+
+
     #build model here
     log.info("Building model")
     model = Baseline(96 * 64 * 8)
@@ -42,10 +47,13 @@ def main(args):
     model.train()
     optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.8,.999), eps=1e-07, weight_decay=.001)
     log.info("Building Dataset")
-    train_dataset = Shots("frames/sample.txt", "labels/sample.txt")
-    train_loader = data.Dataloader(train_dataset, batch_size = 20, shuffle=True, num_workers=8, collate_fn=collate_fn)
+    train_dataset = Shots("frames/train.h5py", "labels/train.npy")
+    train_loader = data.DataLoader(train_dataset, batch_size = 32, shuffle=True, num_workers=4, collate_fn=collate_fn)
 
     # TODO: Do the same thing for dev. For now, use train dataset as dev
+    dev_dataset = Shots("frames/dev.h5py", "labels/dev.npy")
+    dev_loader = data.DataLoader(dev_dataset, batch_size = 32, shuffle=False, num_workers=4, collate_fn = collate_fn)
+
 
     log.info("Training")
     steps_til_eval = 10
@@ -70,19 +78,21 @@ def main(args):
                 #some logging
                 progress_bar.update(batch_size)
                 progress_bar.set_postfix(epoch=epoch, NLL=loss_val)
-                tbx.add_scalar('train/NLL', loss_val)
+                tbx.add_scalar('train/NLL', loss_val, step)
                 steps_til_eval -= batch_size
                 if steps_til_eval <=0:
                     steps_til_eval = 10
-                    results = eval(model, train_loader, device)
+                    results, loss = evaluate(model, dev_loader, device)
+                    # save checkpoint
+                    saver.save(step, model, results, device)
                     log.info("Dev Accuracy " + str(results))
-
+                    log.info("Dev loss" + str(loss))
                     #logging to tensorboard
                     tbx.add_scalar('dev_accuracy', results, step)
+                    tbx.add_scalar("dev_loss", loss, steps)
 
 
-
-def eval(model, loader, device):
+def evaluate(model, loader, device):
     num_correct = 0
     num_samples = 0
     model.eval()
@@ -91,12 +101,14 @@ def eval(model, loader, device):
             frames = frames.to(device)
             y = y.to(device)
             scores = model(frames)
+            loss = F.cross_entropy(scores, ys)
+
             _, preds = scores.max(1)
             num_correct += (preds == y).sum()
             num_samples += pred.shape[0]
         acc = float(num_correct)/num_samples
     model.train()
-    return acc
+    return acc, loss.item()
 
 
 if __name__ == '__main__':
