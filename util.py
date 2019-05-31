@@ -20,13 +20,15 @@ class Shots(data.Dataset):
 
     #assumes datapath is an h5py file
     #label_data_path should be a npy file
-    def __init__(self, img_data_path, label_data_path):
+    # triple is whether or not to turn greyscale into fake rgb
+    # only used for cnn lstm because vgg nonsense
+    def __init__(self, img_data_path, label_data_path, triple = False):
         super(Shots, self).__init__()
         file = h5py.File(img_data_path, 'r')
         images = list(file.keys())[0]
         self.frames = np.asarray(file[images])
         self.y = np.load(label_data_path)
-
+        self.triple = triple
     def __getitem__(self, idx):
         example = (self.frames[idx], self.y[idx])
         return example
@@ -39,12 +41,13 @@ def collate_fn(examples):
     def merge_0d(scalars, dtype=torch.int64):
         return torch.tensor(scalars, dtype=dtype)
     def merge_3d(frames, dtype=torch.double):
-        return torch.tensor(np.stack(list(frames)), dtype=dtype)
+        greyscale = torch.tensor(np.stack(list(frames)), dtype=dtype)
+        #dimension should be batch, 3, 96, 64
+        return torch.cat([greyscale, greyscale, greyscale], dim = 1)
     frames, labels = zip(*examples)
     ys = merge_0d(labels)
     shot_frames = merge_3d(frames)
     print(shot_frames.shape)
-
     return(shot_frames, ys)
 
 class CheckpointSaver:
