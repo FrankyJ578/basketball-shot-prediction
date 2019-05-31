@@ -22,13 +22,16 @@ class Shots(data.Dataset):
     #label_data_path should be a npy file
     # triple is whether or not to turn greyscale into fake rgb
     # only used for cnn lstm because vgg nonsense
-    def __init__(self, img_data_path, label_data_path, triple = False):
+    def __init__(self, img_data_path, label_data_path):
         super(Shots, self).__init__()
         file = h5py.File(img_data_path, 'r')
         images = list(file.keys())[0]
         self.frames = np.asarray(file[images])
+        mean = np.dot([.2989, .5870, .1140], [0.485, 0.456, 0.406])
+        std = np.dot([.2989, .5870, .1140], [0.229, 0.224, 0.225])
+        self.frames = (self.frames - mean)/std
         self.y = np.load(label_data_path)
-        self.triple = triple
+        
     def __getitem__(self, idx):
         example = (self.frames[idx], self.y[idx])
         return example
@@ -42,6 +45,8 @@ def collate_fn(examples):
         return torch.tensor(scalars, dtype=dtype)
     def merge_3d(frames, dtype=torch.double):
         greyscale = torch.tensor(np.stack(list(frames)), dtype=dtype)
+
+        #TODO: IF NOT VGG, SHOULD JUST RETURN GREYSCALE
         #dimension should be batch, 3, 96, 64
         return torch.cat([greyscale, greyscale, greyscale], dim = 1)
     frames, labels = zip(*examples)

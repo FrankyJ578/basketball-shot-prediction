@@ -80,6 +80,7 @@ def main(args):
                 progress_bar.set_postfix(epoch=epoch, NLL=loss_val)
                 tbx.add_scalar('train/NLL', loss_val, step)
                 steps_til_eval -= batch_size
+                input()
                 if steps_til_eval <=0:
                     steps_til_eval = 10
                     results, loss = evaluate(model, dev_loader, device)

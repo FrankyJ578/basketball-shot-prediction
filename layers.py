@@ -56,5 +56,20 @@ class VGGLSTM(nn.Module):
         return output 
 
 
+class TimeCNN(nn.Module):
+    def __init__(self):
+        super(TimeCNN, self).__init__()
+        self.conv1 = nn.Conv3d(1, 16, kernel_size = 5, padding = 2, stride = 1)
+        self.pool1 = nn.MaxPool3d(kernel_size = 2, stride = 2)
+        self.conv2 = nn.Conv3d(16, 16, kernel_size = 3, padding = 1, stride = 1)
+        self.pool2 = nn.MaxPool3d(kernel_size = 2, padding = 2)
+        self.conv3 = nn.Conv3d(16, 32, 3, stride = 2, padding = 1)
+        # TODO: FIGURE OUT THIS SHAPE lol
+        self.linear1 = nn.Linear(, 256)
+        self.linear2 = nn.Linear(256, 2)
+        
 
+    def forward(self, frames):
+
+        inputs = torch.unsqueeze(frames, dim = 1)
         
