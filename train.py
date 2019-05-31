@@ -17,11 +17,12 @@ import torch.utils.data as data
 import util
 import argparse
 from collections import OrderedDict
-from layers import Baseline
+from layers import Baseline, VGGLSTM
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from util import collate_fn, Shots
 
+BATCH_SIZE = 32 
 
 def main(args):
     args.save_dir = util.get_save_dir(args.save_dir, args.name, training=True)
@@ -35,7 +36,7 @@ def main(args):
 
     #build model here
     log.info("Building model")
-    model = Baseline(96 * 64 * 8)
+    model = VGGLSTM()
     model = model.double()
     model = nn.DataParallel(model, args.gpu_ids)
     if args.load_path:
@@ -45,23 +46,23 @@ def main(args):
         step = 0
     model = model.to(device)
     model.train()
-    optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.8,.999), eps=1e-07, weight_decay=.001)
+    optimizer = optim.Adam(filter(lambda p:p.requires_grad, model.parameters()), lr = 0.001, betas=(.8,.999), eps=1e-07, weight_decay=.001)
     log.info("Building Dataset")
-    train_dataset = Shots("frames/train.h5py", "labels/train.npy")
-    train_loader = data.DataLoader(train_dataset, batch_size = 32, shuffle=True, num_workers=4, collate_fn=collate_fn)
+    train_dataset = Shots("videos/train.h5py", "labels/train.npy")
+    train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers=4, collate_fn=collate_fn)
 
-    # TODO: Do the same thing for dev. For now, use train dataset as dev
-    dev_dataset = Shots("frames/dev.h5py", "labels/dev.npy")
-    dev_loader = data.DataLoader(dev_dataset, batch_size = 32, shuffle=False, num_workers=4, collate_fn = collate_fn)
-
-
+    dev_dataset = Shots("videos/dev.h5py", "labels/dev.npy")
+    dev_loader = data.DataLoader(dev_dataset, batch_size = BATCH_SIZE, shuffle=False, num_workers=4, collate_fn = collate_fn)
+    
+    #print(len(train_loader.dataset))
     log.info("Training")
-    steps_til_eval = 10
+    steps_til_eval = 2000
 
-    for epoch in range(1):
+    for epoch in range(100):
         with torch.enable_grad(), tqdm(total=len(train_loader.dataset)) as progress_bar:
             for frames, ys in train_loader:
-                batch_size=frames.shape[0]
+                batch_size = frames.shape[0]
+                step += batch_size
                 frames = frames.to(device)
                 ys = ys.to(device)
                 optimizer.zero_grad()
@@ -80,14 +81,13 @@ def main(args):
                 progress_bar.set_postfix(epoch=epoch, NLL=loss_val)
                 tbx.add_scalar('train/NLL', loss_val, step)
                 steps_til_eval -= batch_size
-                input()
-                if steps_til_eval <=0:
-                    steps_til_eval = 10
+                if steps_til_eval <= 0:
+                    steps_til_eval = 2000
                     results, loss = evaluate(model, dev_loader, device)
                     # save checkpoint
                     saver.save(step, model, results, device)
                     log.info("Dev Accuracy " + str(results))
-                    log.info("Dev loss" + str(loss))
+                    log.info("Dev loss " + str(loss))
                     #logging to tensorboard
                     tbx.add_scalar('dev_accuracy', results, step)
                     tbx.add_scalar("dev_loss", loss, step)
