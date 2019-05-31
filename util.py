@@ -37,12 +37,13 @@ class Shots(data.Dataset):
 
 def collate_fn(examples):
     def merge_0d(scalars, dtype=torch.int64):
-        return torch.tensor(np.repeat(scalars,4), dtype=dtype)
-    def merge_3d(frames, dtype=torch.float64):
-        return torch.stack(frames)
+        return torch.tensor(scalars, dtype=dtype)
+    def merge_3d(frames, dtype=torch.double):
+        return torch.tensor(np.stack(list(frames)), dtype=dtype)
     frames, labels = zip(*examples)
     ys = merge_0d(labels)
     shot_frames = merge_3d(frames)
+    print(shot_frames.shape)
 
     return(shot_frames, ys)
 

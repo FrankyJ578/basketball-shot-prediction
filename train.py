@@ -36,6 +36,7 @@ def main(args):
     #build model here
     log.info("Building model")
     model = Baseline(96 * 64 * 8)
+    model = model.double()
     model = nn.DataParallel(model, args.gpu_ids)
     if args.load_path:
         log.info("Loading checkpoints")
@@ -88,7 +89,9 @@ def main(args):
                     log.info("Dev loss" + str(loss))
                     #logging to tensorboard
                     tbx.add_scalar('dev_accuracy', results, step)
-                    tbx.add_scalar("dev_loss", loss, steps)
+                    tbx.add_scalar("dev_loss", loss, step)
+    
+    tbx.close()
 
 def evaluate(model, loader, device):
     num_correct = 0
@@ -99,18 +102,14 @@ def evaluate(model, loader, device):
             frames = frames.to(device)
             y = y.to(device)
             scores = model(frames)
-            loss = F.cross_entropy(scores, ys)
+            loss = F.cross_entropy(scores, y)
 
             _, preds = scores.max(1)
             num_correct += (preds == y).sum()
-            num_samples += pred.shape[0]
+            num_samples += preds.shape[0]
         acc = float(num_correct)/num_samples
     model.train()
     return acc, loss.item()
-
-
-if __name__ == '__main__':
-    main(get_args())
 
 def get_args():
     parser = argparse.ArgumentParser('Train a model on shots')
@@ -127,3 +126,8 @@ def get_args():
                         type=str,
                         default=None,
                         help='Path to load as a model checkpoint.')
+
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    main(get_args())
