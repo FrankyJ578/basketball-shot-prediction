@@ -22,7 +22,7 @@ from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from util import collate_fn, Shots
 
-BATCH_SIZE = 32 
+BATCH_SIZE = 16 
 
 def main(args):
     args.save_dir = util.get_save_dir(args.save_dir, args.name, training=True)
@@ -46,7 +46,7 @@ def main(args):
         step = 0
     model = model.to(device)
     model.train()
-    optimizer = optim.Adam(filter(lambda p:p.requires_grad, model.parameters()), lr = 0.001, betas=(.8,.999), eps=1e-07, weight_decay=.001)
+    optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.8,.999), eps=1e-07, weight_decay=.001)
     log.info("Building Dataset")
     train_dataset = Shots("videos/train.h5py", "labels/train.npy")
     train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers=4, collate_fn=collate_fn)
@@ -83,7 +83,7 @@ def main(args):
                 steps_til_eval -= batch_size
                 if steps_til_eval <= 0:
                     steps_til_eval = 2000
-                    results, loss = evaluate(model, dev_loader, device)
+                    results, loss = evaluate(model, train_loader, device)
                     # save checkpoint
                     saver.save(step, model, results, device)
                     log.info("Dev Accuracy " + str(results))

@@ -28,8 +28,9 @@ class VGGLSTM(nn.Module):
         self.features = nn.Sequential(*list(original.features.children()))
         for param in self.features.parameters():
             param.requires_grad = False
-        self.lstm = nn.LSTM(input_size = 3072, hidden_size = 128, num_layers = 1)
-        self.linear1 = nn.Linear(128, 32)
+        self.pool = nn.AvgPool2d(2, stride = 2)
+        self.lstm = nn.LSTM(input_size = 512, hidden_size = 256, num_layers = 1)
+        self.linear1 = nn.Linear(256, 32)
         self.linear2 = nn.Linear(32,2)
 
     #frames is size (batch_size, 8, 3, 96, 64)
@@ -41,6 +42,7 @@ class VGGLSTM(nn.Module):
         #print("Inputs", inputs.shape)
         # feats is shape (batch_size * 8, feature_map size of vgg)
         feats = self.features(inputs)
+        feats = self.pool(feats)
         #print("After vgg", feats.shape)
         feats = feats.reshape(8, batch_size, -1)
         #print("After reshape", feats.shape)
