@@ -22,7 +22,7 @@ from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from util import collate_fn, Shots
 
-BATCH_SIZE = 16 
+BATCH_SIZE = 32 
 
 def main(args):
     args.save_dir = util.get_save_dir(args.save_dir, args.name, training=True)
@@ -36,7 +36,7 @@ def main(args):
 
     #build model here
     log.info("Building model")
-    model = VGGLSTM()
+    model = Baseline(8 * 96 * 64)
     model = model.double()
     model = nn.DataParallel(model, args.gpu_ids)
     if args.load_path:
@@ -46,14 +46,14 @@ def main(args):
         step = 0
     model = model.to(device)
     model.train()
-    optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.8,.999), eps=1e-07, weight_decay=.001)
+    optimizer = optim.Adam(model.parameters(), lr = 0.0005, betas=(.8,.999), eps=1e-07, weight_decay=.001)
     log.info("Building Dataset")
     train_dataset = Shots("videos/train.h5py", "labels/train.npy")
     train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers=4, collate_fn=collate_fn)
 
     dev_dataset = Shots("videos/dev.h5py", "labels/dev.npy")
     dev_loader = data.DataLoader(dev_dataset, batch_size = BATCH_SIZE, shuffle=False, num_workers=4, collate_fn = collate_fn)
-    
+ 
     #print(len(train_loader.dataset))
     log.info("Training")
     steps_til_eval = 2000
@@ -83,7 +83,7 @@ def main(args):
                 steps_til_eval -= batch_size
                 if steps_til_eval <= 0:
                     steps_til_eval = 2000
-                    results, loss = evaluate(model, train_loader, device)
+                    results, loss = evaluate(model, dev_loader, device)
                     # save checkpoint
                     saver.save(step, model, results, device)
                     log.info("Dev Accuracy " + str(results))
@@ -99,12 +99,12 @@ def evaluate(model, loader, device):
     num_samples = 0
     model.eval()
     with torch.no_grad():
-        for frames, y in loader:
+        for frames, y in tqdm(loader):
             frames = frames.to(device)
             y = y.to(device)
             scores = model(frames)
             loss = F.cross_entropy(scores, y)
-
+            
             _, preds = scores.max(1)
             num_correct += (preds == y).sum()
             num_samples += preds.shape[0]

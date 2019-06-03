@@ -30,7 +30,6 @@ class Shots(data.Dataset):
         self.frames = file[images]
         #print(self.frames.shape)
         self.y = np.load(label_data_path)
-        
     def __getitem__(self, idx):
         example = (self.frames[idx], self.y[idx])
         return example
@@ -40,12 +39,15 @@ class Shots(data.Dataset):
 
 
 def collate_fn(examples):
-    mean = np.dot([.2989, .5870, .1140], [0.485, 0.456, 0.406])
-    std = np.dot([.2989, .5870, .1140], [0.229, 0.224, 0.225])
+    mean = 128.40986211
+    std = 63.5319777
+    #mean = np.dot([.2989, .5870, .1140], [0.485, 0.456, 0.406])
+    #std = np.dot([.2989, .5870, .1140], [0.229, 0.224, 0.225])
     def merge_0d(scalars, dtype=torch.int64):
         return torch.tensor(scalars, dtype=dtype)
     def merge_3d(frames, dtype=torch.double):
         greyscale = torch.tensor(np.stack(list(frames)), dtype=dtype)
+        return greyscale
         greyscale = torch.unsqueeze(greyscale, dim = 1)
         #print("Greyscale shape", greyscale.shape)
         #TODO: IF NOT VGG, SHOULD JUST RETURN GREYSCALE
