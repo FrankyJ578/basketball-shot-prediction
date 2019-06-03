@@ -14,22 +14,20 @@ from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from util import collate_fn, Shots
 
+BATCH_SIZE = 32
+
+def main():
+    save_dir = util.get_save_dir('save','baseline', training=False)
+    log = util.get_logger(save_dir, 'baseline')
+    device, gpu_ids = util.get_available_devices()
+    tbx = SummaryWriter(save_dir)
 
 
 
-def main(args):
-    args.save_dir = util.get_save_dir(args.save_dir, args.name, training=True)
-    log = util.get_logger(args.save_dir, args.name)
-    device, args.gpu_ids = util.get_available_devices()
-    tbx = SummaryWriter(args.save_dir)
-
-    #this lets use save model
-    saver = util.CheckpointSaver(args.save_dir, max_checkpoints = 15, metric_name='accuracy', maximize_metric = True, log=log)
-
-
+    path = 'save/train/baseline-01/step_410488.pth.tar'
     #build model here
     log.info("Building model")
-    model = Baseline()
+    model = Baseline(8 * 96 * 64)
     model = nn.DataParallel(model, gpu_ids)
     model = util.load_model(model, path, gpu_ids, return_step=False)
     model = model.to(device)
@@ -42,7 +40,7 @@ def main(args):
     num_correct = 0
     num_samples = 0
     with torch.no_grad():
-        for frames, y in loader:
+        for frames, y in test_loader:
             frames = frames.to(device)
             y = y.to(device)
             scores = model(frames)
@@ -53,3 +51,8 @@ def main(args):
             num_samples += preds.shape[0]
     acc = float(num_correct)/num_samples
     log.info("Accuracy on test set is {}".format(acc))
+
+
+
+if __name__ == '__main__':
+    main()
