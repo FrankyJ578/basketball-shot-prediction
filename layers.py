@@ -152,8 +152,6 @@ class Resnet(nn.Module):
         #print(list(self.resnet.children()))
         print(type(self.resnet.children()))
 
-        for layer in self.resnet.children():
-            layer.fc = nn.Linear(4096, 2)
         #self.resnet = nn.Sequential(*[*list(self.resnet.children()), Flatten()])
 
         for param in self.resnet.parameters():

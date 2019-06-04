@@ -49,7 +49,7 @@ def collate_fn(examples):
         return torch.tensor(scalars, dtype=dtype)
     def merge_3d(frames, dtype=torch.double):
         greyscale = torch.tensor(np.stack(list(frames)), dtype=dtype)
-        #return greyscale
+        return greyscale
         greyscale = torch.unsqueeze(greyscale, dim = 1)
         #print("Greyscale shape", greyscale.shape)
         #TODO: IF NOT VGG, SHOULD JUST RETURN GREYSCALE
