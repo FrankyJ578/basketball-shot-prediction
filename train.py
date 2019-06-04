@@ -46,7 +46,7 @@ def main(args):
         step = 0
     model = model.to(device)
     model.train()
-    optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.9,.999), eps=1e-08, weight_decay=.001)
+    optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.9,.999), eps=1e-08)
     log.info("Building Dataset")
     train_dataset = Shots("videos/train.h5py", "labels/train.npy")
     train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers=4, collate_fn=collate_fn)
