@@ -17,17 +17,18 @@ import torch.utils.data as data
 import util
 import argparse
 from collections import OrderedDict
-from layers import Baseline, VGGLSTM, VGGLinear
+from layers import Baseline, VGGLSTM, VGGLinear, Resnet, TimeCNN
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from util import collate_fn, Shots
 
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 
 def main(args):
     args.save_dir = util.get_save_dir(args.save_dir, args.name, training=True)
     log = util.get_logger(args.save_dir, args.name)
     device, args.gpu_ids = util.get_available_devices()
+    print(args.gpu_ids)
     tbx = SummaryWriter(args.save_dir)
 
     #this lets use save model
@@ -36,18 +37,29 @@ def main(args):
 
     #build model here
     log.info("Building model")
-    model = VGGLinear()
+    #model = VGGLinear()
+    #model = Baseline(8 * 96 * 64)
+    #model = VGGLSTM()
+    #model = Resnet()
+    model = TimeCNN()
     model = model.double()
+    print('bbefore data parallel')
     model = nn.DataParallel(model, args.gpu_ids)
     if args.load_path:
         log.info("Loading checkpoints")
         model, step = util.load_model(model, args.load_path, args.gpu_ids)
     else:
         step = 0
+    print('before to device')
     model = model.to(device)
     model.train()
-    optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.9,.999), eps=1e-08, weight_decay=.001)
+
+    # These are the parameters with the VGGLinear
+    #optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.9,.999), eps=1e-08, weight_decay=.001)
     log.info("Building Dataset")
+    
+    # These are the parameters that worked with the best TimeCNN model
+    optimizer = optim.Adam(model.parameters(), lr = 1e-3, betas=(.9,.999), eps=1e-08, weight_decay=.005)
     train_dataset = Shots("videos/train.h5py", "labels/train.npy")
     train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers=4, collate_fn=collate_fn)
 
@@ -58,7 +70,7 @@ def main(args):
     log.info("Training")
     steps_til_eval = 2000
 
-    for epoch in range(100):
+    for epoch in range(5):
         with torch.enable_grad(), tqdm(total=len(train_loader.dataset)) as progress_bar:
             for frames, ys in train_loader:
                 batch_size = frames.shape[0]
