@@ -28,8 +28,9 @@ class Shots(data.Dataset):
         images = list(file.keys())[0]
         # this avoids it being loaded into memory at the same time
         self.frames = file[images]
+        print(self.frames)
         #print(self.frames.shape)
-        self.y = np.load(label_data_path)
+        self.y = torch.tensor(np.load(label_data_path))
     def __getitem__(self, idx):
         example = (self.frames[idx], self.y[idx])
         return example
@@ -47,7 +48,6 @@ def collate_fn(examples):
         return torch.tensor(scalars, dtype=dtype)
     def merge_3d(frames, dtype=torch.double):
         greyscale = torch.tensor(np.stack(list(frames)), dtype=dtype)
-        return greyscale
         greyscale = torch.unsqueeze(greyscale, dim = 1)
         #print("Greyscale shape", greyscale.shape)
         #TODO: IF NOT VGG, SHOULD JUST RETURN GREYSCALE

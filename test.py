@@ -9,7 +9,7 @@ import torch.utils.data as data
 import util
 import argparse
 from collections import OrderedDict
-from layers import Baseline, VGGLSTM
+from layers import Baseline, VGGLSTM, VGGLinear
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from util import collate_fn, Shots
@@ -17,17 +17,17 @@ from util import collate_fn, Shots
 BATCH_SIZE = 32
 
 def main():
-    save_dir = util.get_save_dir('save','baseline', training=False)
-    log = util.get_logger(save_dir, 'baseline')
+    save_dir = util.get_save_dir('save','vgglinear', training=False)
+    log = util.get_logger(save_dir, 'vgglinear')
     device, gpu_ids = util.get_available_devices()
     tbx = SummaryWriter(save_dir)
 
 
 
-    path = 'save/train/baseline-01/step_410488.pth.tar'
+    path = 'save/train/vgglinear-02/best.pth.tar'
     #build model here
     log.info("Building model")
-    model = Baseline(8 * 96 * 64)
+    model = VGGLinear()
     model = nn.DataParallel(model, gpu_ids)
     model = util.load_model(model, path, gpu_ids, return_step=False)
     model = model.to(device)

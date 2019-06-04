@@ -17,12 +17,12 @@ import torch.utils.data as data
 import util
 import argparse
 from collections import OrderedDict
-from layers import Baseline, VGGLSTM
+from layers import Baseline, VGGLSTM, VGGLinear
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
 from util import collate_fn, Shots
 
-BATCH_SIZE = 32 
+BATCH_SIZE = 16
 
 def main(args):
     args.save_dir = util.get_save_dir(args.save_dir, args.name, training=True)
@@ -36,7 +36,7 @@ def main(args):
 
     #build model here
     log.info("Building model")
-    model = Baseline(8 * 96 * 64)
+    model = VGGLinear()
     model = model.double()
     model = nn.DataParallel(model, args.gpu_ids)
     if args.load_path:
@@ -46,7 +46,7 @@ def main(args):
         step = 0
     model = model.to(device)
     model.train()
-    optimizer = optim.Adam(model.parameters(), lr = 0.0005, betas=(.8,.999), eps=1e-07, weight_decay=.001)
+    optimizer = optim.Adam(model.parameters(), lr = 0.001, betas=(.9,.999), eps=1e-08, weight_decay=.001)
     log.info("Building Dataset")
     train_dataset = Shots("videos/train.h5py", "labels/train.npy")
     train_loader = data.DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle=True, num_workers=4, collate_fn=collate_fn)
