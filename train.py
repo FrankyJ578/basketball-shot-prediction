@@ -70,7 +70,7 @@ def main(args):
     log.info("Training")
     steps_til_eval = 2000
 
-    for epoch in range(5):
+    for epoch in range(30):
         with torch.enable_grad(), tqdm(total=len(train_loader.dataset)) as progress_bar:
             for frames, ys in train_loader:
                 batch_size = frames.shape[0]

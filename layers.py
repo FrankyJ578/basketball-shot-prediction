@@ -80,9 +80,9 @@ class TimeCNN(nn.Module):
 
         # TODO: FIGURE OUT THIS SHAPE lol
         #self.linear1 = nn.Linear(6144, 3072)
-        self.linear1 = nn.Linear(3072, 512)
+        self.linear1 = nn.Linear(3072, 1024)
         self.dropout1 = nn.Dropout(.5)
-        self.linear2 = nn.Linear(512, 256)
+        self.linear2 = nn.Linear(1024, 256)
         self.dropout2 = nn.Dropout(.5)
         self.linear3 = nn.Linear(256, 2)
         #self.linear2 = nn.Linear(3072, 1536)
@@ -111,9 +111,9 @@ class TimeCNN(nn.Module):
         feats = self.pool2(feats)
         #print(f'After pool2: {feats.shape}')
         feats = self.conv3(feats)
-        feats = self.bn3(feats)
-        feats = self.pool3(feats)
-        feats = self.conv4(feats)
+        #feats = self.bn3(feats)
+        #feats = self.pool3(feats)
+        #feats = self.conv4(feats)
         #print(f'After conv3: {feats.shape}')
         
         # Resize to be batch_size x features
@@ -124,10 +124,10 @@ class TimeCNN(nn.Module):
         outputs = self.linear2(outputs)
         outputs = self.dropout2(outputs)
         outputs = self.linear3(outputs)
-        outputs = self.dropout3(outputs)
-        outputs = self.linear4(outputs)
-        outputs = self.dropout4(outputs)
-        outputs = self.linear5(outputs)
+        #outputs = self.dropout3(outputs)
+        #outputs = self.linear4(outputs)
+        #outputs = self.dropout4(outputs)
+        #outputs = self.linear5(outputs)
         #print(f'After linear2: {outputs.shape}')
         return outputs
 
