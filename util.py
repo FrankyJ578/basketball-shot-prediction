@@ -281,3 +281,5 @@ def get_logger(log_dir, name):
     logger.addHandler(console_handler)
 
     return logger
+
+
