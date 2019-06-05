@@ -62,9 +62,10 @@ def main():
         test_dataset = Shots("videos/test.h5py", "labels/test.npy") 
         test_loader = data.DataLoader(test_dataset, batch_size = BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
         num_correct = 0
-        num_samles = 0
+        num_samples = 0
         missed_1, missed_0 = 0, 0
         num_1_predicted = 0
+        num_0_predicted = 0
         with torch.no_grad():
             for frames, y in test_loader:
                 frames = frames.to(device)
@@ -82,7 +83,7 @@ def main():
                         missed_0 += 1
                 num_samples += preds.shape[0]
                 num_1_predicted += (preds == 1).sum()
-        
+                num_0_predicted += (preds == 0).sum()
         acc = float(num_correct)/num_samples
         
         if acc > best_accuracy:
@@ -93,6 +94,8 @@ def main():
         log.info("Accuracy on test set is {}".format(acc))
         log.info("Missed 1's: {}, Missed 0's: {}".format(missed_1, missed_0))
         log.info("Number 1's predicted: {}".format(num_1_predicted))
+        log.info("Number 0's predicted: {}".format(num_0_predicted))
+
         log.info('-----------------')
     
     log.info("Best Accuracy on test set is {} and path was {}".format(best_accuracy, best_path))
